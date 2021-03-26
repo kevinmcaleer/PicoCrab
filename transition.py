@@ -18,8 +18,10 @@ def check_duration(calc, current_time, duration, start_time, target_angle):
     # print("check_time ", current_time, "duration", duration, 'start time', start_time, "target_angle", target_angle, "calc", calc)
     if current_time > duration:
         # print("duration exception triggered")
-        return target_angle
-    return calc
+        return int(target_angle)
+    # else:
+    #     print("current time is less than or equal to duration", current_time, duration)
+    return int(calc)
 
 class Transition():
     def linear_tween(self, current_time, start_value, change_in_value, duration, start_time, target_angle):
@@ -129,6 +131,11 @@ class Transition():
     def ease_in_sine(self, current_time, start_value, change_in_value, duration, start_time, target_angle):
         """ sinusoidal easing in - accelerating from zero velocity """
         calc = 1-change_in_value * cos(current_time / duration * (pi/2)) + change_in_value + start_value
+        # print("calc is",calc)
+        calc = check_exceptions(calc, change_in_value, start_value)
+        # print("calc is",calc)
+        calc = check_duration(calc, current_time, duration, start_time, target_angle)
+        # print("calc is",calc)
         return int(calc)
 
     def ease_out_sine(self, current_time, start_value, change_in_value, duration, start_time, target_angle):

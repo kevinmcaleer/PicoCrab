@@ -94,12 +94,12 @@ class Servo():
     def angle(self, angle_value, channel):
         ''' Sets the angle, in degrees '''
         # print("setting angle for channel", self.channel, "to angle", angle_value)
-        if ((angle_value >= 0) and (angle_value > self.min_angle)) and ((angle_value <= 180) and (angle_value <self.max_angle)):
+        if ((angle_value >= 0) and (angle_value >= self.min_angle)) and ((angle_value <= 180) and (angle_value <=self.max_angle)):
             self.__current_angle = angle_value
 
             # map values - degrees to duty
             
-            duty = map_angle(angle_value, 0, 180, 0, 4096)
+            duty = map_angle(angle_value, 0, 180, 0, 4095)
             # print("Duty is:", duty, "angle requested is", angle_value)
             # self.__pwm.duty_u16(my_angle)
             self.pca9685.duty(index=channel, value=duty)
@@ -234,7 +234,11 @@ class Servo():
         # print("tick: ", self.name)
         self.__current_time = ticks_us()
         elapsed_time = self.elapsed_time
+
+        # Check is the duration is up
         if elapsed_time >= self.duration:
+            cur_angle = self.target_angle
+            self.angle(angle_value=cur_angle, channel=self.channel)
             return True
         cur_angle = self.__current_angle
         valid_transition = False
@@ -291,11 +295,13 @@ class Servo():
             cur_angle = Transition().ease_in_sine(current_time=self.elapsed_time,
                          start_value=self.start_angle,
                          change_in_value=self.change_in_value,
-                         duration=self.duration)
+                         duration=self.duration, 
+                         start_time=self.__tick_start_time, 
+                         target_angle=self.target_angle)
             valid_transition = True
         if not valid_transition:
             print("error - No Valid Transition provided")
-        # print(self.name, int(cur_angle))
+
         cur_angle = int(cur_angle)
         self.angle(angle_value=cur_angle, channel=self.channel)
         

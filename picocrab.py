@@ -1,5 +1,5 @@
-# PicoCat
-# 31 January 2020
+# PicoCrab
+# 26 March 2021
 # Kevin McAleer
 
 from machine import Pin, I2C
@@ -11,17 +11,10 @@ class Limbs():
     """
     setup legs and feet to correspond to the correct channel
     """
-    FRONT_LEFT_LEG = 0
-    FRONT_RIGHT_LEG = 1
-    BACK_LEFT_LEG = 2
-    BACK_RIGHT_LEG = 3
-    FRONT_LEFT_FOOT = 4
-    FRONT_RIGHT_FOOT = 5
-    BACK_LEFT_FOOT = 6
-    BACK_RIGHT_FOOT = 7
-    TAIL = 8
-    NECK = 9
-    HEAD = 10
+    LEFT_LEG = 0
+    RIGHT_LEG = 1
+    LEFT_FOOT = 2
+    RIGHT_FOOT = 3
 
 class Leg():
     
@@ -46,9 +39,7 @@ class Leg():
         print("standing up leg", self.name)
         self.shoulder.transition = 'ease_in_sine'
         self.foot.transition = 'ease_in_sine'
-        # self.shoulder.duration_in_seconds = 0.5 
         self.shoulder.duration_in_seconds = 2
-        # self.foot.duration_in_seconds = 0.5
         self.foot.duration_in_seconds = 2
         self.shoulder.target_angle = 180
         self.foot.target_angle = 180
@@ -80,13 +71,13 @@ class Leg():
 
     @property
     def stand_tick(self):
-        if not self.shoulder.tick() or self.foot.tick():
+        if not self.shoulder.tick() or not self.foot.tick():
             self.shoulder.tick()
             self.foot.tick()
         
             # show current values
-            self.foot.show()
-            self.shoulder.show()
+            # self.foot.show()
+            # self.shoulder.show()
             return False
         else:
             return True 
@@ -98,8 +89,14 @@ class Leg():
         else:
             self.stand_tick = True
 
-class PicoCat():
-    name = "PicoCat"
+    def reset(self):
+        self.shoulder.angle = 90
+        self.foot.angle = 90
+        print("Reseting limbs to 90 degrees")
+        return True
+
+class PicoCrab():
+    name = "PicoCrab"
     legs = []
     sda = Pin(0)
     scl = Pin(1)
@@ -108,15 +105,11 @@ class PicoCat():
     def __init__(self):
         self.i2c = I2C(id=self.id, sda=self.sda, scl=self.scl) 
         self.pca9685 = PCA9685(self.i2c)
-        back_left = Leg(self.i2c, pca9685=self.pca9685, name="BACK_LEFT", shoulder_pin=Limbs.BACK_LEFT_LEG, foot_pin=Limbs.BACK_LEFT_FOOT)
-        back_right = Leg(self.i2c, pca9685=self.pca9685, name="BACK_RIGHT", shoulder_pin=Limbs.BACK_RIGHT_LEG, foot_pin=Limbs.BACK_RIGHT_FOOT)
-        front_left = Leg(self.i2c, pca9685=self.pca9685, name='FRONT_LEFT', shoulder_pin=Limbs.FRONT_LEFT_LEG, foot_pin=Limbs.FRONT_LEFT_FOOT)
-        front_right = Leg(self.i2c, pca9685=self.pca9685, name='FRONT_RIGHT', shoulder_pin=Limbs.FRONT_RIGHT_LEG, foot_pin=Limbs.FRONT_RIGHT_FOOT)
+        left = Leg(self.i2c, pca9685=self.pca9685, name='LEFT', shoulder_pin=Limbs.LEFT_LEG, foot_pin=Limbs.LEFT_FOOT)
+        right = Leg(self.i2c, pca9685=self.pca9685, name='RIGHT', shoulder_pin=Limbs.RIGHT_LEG, foot_pin=Limbs.RIGHT_FOOT)
 
-        self.legs.append(front_left)
-        self.legs.append(front_right)
-        self.legs.append(back_left)
-        self.legs.append(back_right)
+        self.legs.append(left)
+        self.legs.append(right)
 
         print("***", self.name, "is Online ***")
 
@@ -131,21 +124,30 @@ class PicoCat():
         for limb in self.legs:
             limb.sit()
     
+    def reset(self):
+        for limb in self.legs:
+            if limb.reset():
+                print("limb reset")
+            else:
+                print("limb not reset")
 
-cat = PicoCat()
-cat.stand()
+crab = PicoCrab()
+crab.stand()
 
-for limb in cat.legs:
+for limb in crab.legs:
     print("limb status:", limb.stand_tick)
     while not limb.stand_tick:
         print("not stand_tick")
         limb.stand_tick
 
 sleep(1)
-cat.sit()
+crab.sit()
 
-for limb in cat.legs:
+for limb in crab.legs:
     
     while not limb.stand_tick:
         print("not stand_tick")
         limb.stand_tick
+
+print("resetting limbs to 90 degrees")
+crab.reset()
